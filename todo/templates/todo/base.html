@@ -1,0 +1,41 @@
+<!-- !базовый шаблон -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+</head>
+<body>
+    
+    {% if user.is_authenticated %}  <!-- ! проверям если пользователь вошел в свой акк -->
+
+    Logged in as {{ user.username }}  <!-- * в скобках обращаемся к имени пользователя -->
+
+<button><a href="{% url 'createtodo' %}">create</a>  </button>
+<button><a href="{% url 'currenttodos' %}">current</a>  </button>
+<button><a href="{% url 'complitedtodos' %}">completed</a>  </button>
+
+
+    <form method="POST", action="{% url 'logoutuser'  %}">
+        {% csrf_token %}
+        
+        <button type="submit">logout</button>
+    </form>
+
+    {% else %}  <!-- ! если не вошел -->
+    
+    <a href="{% url 'signupuser'  %}">Sign Up</a> <!-- * кнопка решистрации -->
+    <a href="{% url 'loginuser'  %}">Login</a> <!-- * кнопка входа -->
+
+    {% endif %}
+    <br>
+    <br>
+
+    {% block content %}    {% endblock %}
+
+
+</body>
+</html>

@@ -1,0 +1,162 @@
+1)создаю проект
+django-admin startproject todowoo
+
+2) создаю приложение 
+python manage.py startapp todo
+
+3) todowoo>settings.py добавляем приложение todo в INSTALLED_APPS
+
+4) python manage.py makemigrate  и затем python manage.py migrate 
+
+5) создаем страницу для регистрации пользователя
+5.1 urls.py создаем путь (название в адресной строке, ссылка на вьюшку, имя)
+5.2 views.py делаем вьюшку которая возвражщает render(request, ссылка на html файл)
+5.3 создаем html по адресу  todo/templates/todo
+
+6) создаем форму регистрации
+6.1 в файле views.py импортируем from django.contrib.auth.forms import UserCreationForm
+6.2 return вьюшки регистрации передаем словарь где ключом будет form а значением UserCreationForm()
+6.3 в файле html вставляем form.as_p в двойных фигурных скобках  as_p для более читабельбного вида
+6.4 заключаем это в тег form с методом POST  добавляем button type="submit"
+6.5 {% csrf_token %} всталяем в html  (это типичный способ защиты сайтов)
+6.6 в views.py from django.contrib.auth.models import User импортируем модель юзера для сохранения логина и пароля в встроенную базу джанго 
+6.7 в views.py добавляем проверку if.request.method == 'GET': то return render
+6.8 в else if из request.POST пароль1 и пароль2 совпадают, тога создаем нового юзера с помощью модели которую импортировали выше:
+    - user = User.objects.create_user(request.POST['username'], password=request.POST['password1']) # user object
+    - user.save() # save user
+6.9 если пароли разные вывести сообщение что пароли разные
+    - для этого возвращаем то же что и в 6.2 и добваляем словарь ошибки
+    return render(request, 'todo/signupuser.html', {'form': UserCreationForm(), 'error': 'Password did not match'})
+    - в код html добавляем ссылку на ошибку с помощью двойных фигурных скобок
+6.10 сделаем проверку на уникальный ник нейм, импортируем IntegrityError из django.db
+    после проверку на password1 password2 сделаем try на создание юзера
+    ниже будет except IntegrityError и вернем тоже что в 6.9 но в еррор напишем что имя занято
+
+    добавим в try  login(request,user) что бы пользователь переходил на свой аккаунт login импортируем from django.contrib.auth import login 
+6.11 из shortcuts импортируем redirect, и после логин делаем return redirect('имя path из urls') для етого надо сделать path, view, html
+6.... закроем сервер и создадим суперюзера
+
+7) создадим базовый  base.html  шаблон для всех html в котором будет выводиться зарегестрирован ли пользователь
+для проверки есть ли пользователь в аккаунте (зашел), не нужнро вручную искать значение в джанго есть встроенные методы в файле базового html
+добавим кнопки 
+расшиширм с помощью базового шаблона другие шаблоны(подробнее в файлах html)
+
+8) Выход пользователя... 
+    - создадим путь в urls.py logut/, views.logoutuser, name=logoutuser.
+    - в views.py 
+        - импорт logout
+        - создадим вьюшку где делаем проверку что был POST запрос из request
+        - logout(request)
+        - return redirect('home') нужно создать путь, вьюшку и html для home(расширяя с помощью base.html)
+        - base.html убираем тег a для логоут, и делаем форму с методом ПОСТ и актион {% url 'logoutuser'  %} и добавляем кнопку submit внутрь   
+
+9) реализация входа:
+    9.1 в urls.py создаю путь для логинюзер
+    9.2 делаю вьюшку (нужно реализовать функцию опрелделения имени пользователя и соответсвие пароля)
+        - импортируем AuthenticationForm
+        - импортируем authenticate, после  login, logout
+        - если получаемы запрос GET, то return render(request, 'todo/loginuser.html', {'form': AuthenticationForm()})
+        - иначе создем объект user с помощью authenticate и записываем username и password
+            - если была ошибка пароля или ника, значит в объект user == None:
+                возвращаем заново return render(request, 'todo/loginuser.html', {'form': AuthenticationForm(), 'error':'login or password error'})
+            - если все ОК
+                login пользователя и
+                redirect на его страницу
+ 
+    9.3 делаю html
+        - base.html - делаю ссылки sign и login кликабельными прописываю href
+        - копирую код из signupuser.html и меняю все на login
+
+10) создание модели TODO
+    класс ТУДУ(моделс.Модел)
+    title заголовок CharField(max_length=100)
+    memo описание TextField(blank=True) не обязательным к заполнению
+    created дата создания = DateTimeField(auto_now_add=True) создается автоматически
+    datecomplited отметка времени выполнения = DateTimeField(null=True, blank=True) либо нулл либо определенный формат даты и времени
+    important важность BooleanField(default=False) важно или нет, не обязательно к заполнению
+    user привязка записи к пользователю = ForeignKey(User, on_delete=models.CASCADE)
+    для этого импортируем Юзер user = models.ForeignKey(User, on_delete=models.CASCADE)
+    этот внешний ключ и определяет связь между записью и пользователем, берет айди пользователя и привязывает его у туду. 
+
+что бы лучше отображалось  админке
+    def __str__(self):
+        return self.title
+
+    затем делаем миграцию 
+    затем в admin.py
+    импортируем модели  .models
+
+    дата создания тудушки не отображаеся, но можно сделать что бы ее было видно, но изменить ее нельзя
+
+    class TodoAdmin(admin.ModelAdmin):
+        readonly_fields = ('created')
+
+    что бы было видно в панели администратара
+    admin.site.register(Todo, TodoAdmin)
+
+11 ) Функциоал создания записей
+
+    - создать в папке приложения forms.py для записис тудушки(своя форма)
+    from django.forms import ModelForm
+    from model import TodoModel
+
+        class TodoForm(ModelForm):
+            class Meta:
+                model = TodoModel
+                fields = ['title', 'memo', 'important']
+
+    - urls.py  ()
+        создаем путь и ссылку на вьюшку 
+
+    - views.py    
+        def createtodo:
+        если GET
+         то рендер на страницу и передаем форму туду
+        иначе
+        пользоваетл ввел что то и отправил запрос на размещение(то есть когда мы ввели и нажали кнопку)
+            скохраняем в переменную форм то что передала созданная форма из пост запроса
+            newtodo = сохраняем переменную .save(commit=False)
+            newtodo.user = request.user
+            newtodo.save
+            return redirect ('currenttodos')
+
+
+
+    - createtodo.html
+        то же что и в логине но изменим на туду
+
+12) ОТОБРАЖЕНИЕ ТУДУШЕК ДЛЯ КАЖДОГО пользователя 
+    В currenttodos записать в переменную все объекты юзера из модели todo .objects.filter(user=request.user)
+    и в ретерн вехвращать словарь ключ todos значение та переменная выше
+    в шаблоне html сделаем отображение задач  в списке {% for todo in todos %}  в элементе списка {{ todo }}  {% endfor %}
+    теперь абсолютно все записи видны. Нужно это исправить
+
+13) выделение важных тудушек и описания(memo)
+
+    в currenttodos.html в элеменет списка добавяем еще один if если memo
+
+    и if todo.importanat  тег b помещаем туда туду
+    
+
+14) настраиваем переход к описанию тудушки при нажатии на нее в списке своих тудушек
+что бы можно было переходить к описанию нажатием на тудушку, обернем код в тег a currenttodos.html
+    - urls.py
+    делаем путь path('todo/<int:todo_pk>', views.viewtodo, name="viewtodo"), 
+
+    - views.py
+    импортировать from django.shortcuts import get_object_or_404
+    сделать вьюшку котрая принимает помимо request еще и pk
+    создаем todo котрые наследуется от get_object_or_404 и принимает модель и ключ
+    создаем форму, котраыя наследуется от созданной ранее формы для записей(instance=todo)
+    в ретерн помимо всего добавляем словарь todo:todo, form:form
+
+    - viewtotdo.html
+    расширяем его базовым шаблоном и обращаемся к todo в фигурных скобках
+     добавляем тег форм скопированный из loginuser.html(csrf_token, form.as_p, method=POST)
+
+15)после использования декоратор login_required(когда нельзя зайти на определенные страницы не авторизованым пользователям)
+что бы ошибка была более понятной в settings.py   LOGIN_URL = '/login'
+    
+
+    
+    

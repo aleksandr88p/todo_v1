@@ -1,0 +1,22 @@
+{% extends 'todo/base.html' %}  <!-- * расширяемся с помощью этого файла -->
+
+{% block content %}   <!-- *  используем это  -->
+
+<h1>current</h1>
+
+
+<ul> <!-- в списке -->
+    {% for todo in todos %}   <!-- начало цикла -->
+    <li>
+        <a href="{% url 'viewtodo' todo.id %}">  <!--* заключаем в тег, что бы можно было перейти по ссылке к описанию  -->
+        {% if todo.importanat %}<b>{% endif %}  <!--  елси важная то жирным -->
+            {{ todo.title }}  <!-- переменная из цикола , -->
+        {% if todo.importanat %}</b>{% endif %} 
+        <!-- {% if todo.memo %} - {{todo.memo  }}  {% endif %} --> <!-- если будет описание -->
+        </a>
+    </li> 
+    {% endfor %} <!-- конец цикла -->
+</ul>
+
+
+{% endblock %}  <!-- * -->
